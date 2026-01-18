@@ -7,14 +7,8 @@ on:
 
 jobs:
   python:
-    name: Python checks (${{ matrix.project }})
+    name: Python checks (chatkit/backend)
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        project:
-          - chatkit/backend
-          - managed-chatkit/backend
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -24,8 +18,8 @@ jobs:
         with:
           python-version: "3.13"
 
-      - name: Install dependencies (${{ matrix.project }})
-        working-directory: ${{ matrix.project }}
+      - name: Install dependencies
+        working-directory: chatkit/backend
         env:
           PIP_DISABLE_PIP_VERSION_CHECK: "1"
         run: |
@@ -33,55 +27,47 @@ jobs:
           if [ -f "pyproject.toml" ]; then python -m pip install ".[dev]"; fi
           python -m pip install mypy
 
-      - name: Syntax check (${{ matrix.project }})
-        working-directory: ${{ matrix.project }}
+      - name: Syntax check
+        working-directory: chatkit/backend
         run: python -m compileall app
 
-      - name: Ruff lint (${{ matrix.project }})
-        working-directory: ${{ matrix.project }}
+      - name: Ruff lint
+        working-directory: chatkit/backend
         run: python -m ruff check app
 
-      - name: Ruff format check (${{ matrix.project }})
-        working-directory: ${{ matrix.project }}
+      - name: Ruff format check
+        working-directory: chatkit/backend
         run: |
           python -m ruff format --check app || {
-            echo "::error ::Ruff format check failed. Run 'python -m ruff format app' locally to apply formatting.";
+            echo "::error ::Ruff format check failed. Run 'python -m ruff format app' locally to fix.";
             exit 1;
           }
 
-      - name: mypy (${{ matrix.project }})
-        working-directory: ${{ matrix.project }}
+      - name: mypy
+        working-directory: chatkit/backend
         run: python -m mypy app --ignore-missing-imports
 
   node:
-    name: Node checks (${{ matrix.project }})
+    name: Node checks (chatkit/frontend)
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        project:
-          - chatkit/frontend
-          - managed-chatkit/frontend
-
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: "npm"
 
       - name: Install dependencies
-        working-directory: ${{ matrix.project }}
+        working-directory: chatkit/frontend
         run: |
           if [ -f "package-lock.json" ]; then npm ci; else npm install; fi
 
       - name: Run ESLint
-        working-directory: ${{ matrix.project }}
+        working-directory: chatkit/frontend
         run: npm run lint || echo "Lint warnings"
 
       - name: Run build
-        working-directory: ${{ matrix.project }}
+        working-directory: chatkit/frontend
         run: npm run build
